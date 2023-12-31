@@ -15,3 +15,6 @@ pip install opencv-python scikit-learn numpy matplotlib
 Run the script model.py after installing the required packages and organizing the dataset. The script will train the SVM model, evaluate its performance, and visualize predictions.
 
 For an optimal experience, it's recommended to use PyCharm IDE for running the project.
+
+##Dataset
+Find the used dataset here: https://1drv.ms/f/s!Akq-zT2dRvG8goZe4-mY0gFrHvt7tg?e=OwEHcj
