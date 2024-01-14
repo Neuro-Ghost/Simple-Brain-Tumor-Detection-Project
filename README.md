@@ -17,7 +17,7 @@ Run the script model.py after installing the required packages and organizing th
 For an optimal experience, it's recommended to use PyCharm IDE for running the project.
 
 
-## .p and .ipynb Scripts
+## .py and .ipynb Scripts
 Uploaded both scripts for compatibility with different python enviroments. 
 
 ## Dataset
