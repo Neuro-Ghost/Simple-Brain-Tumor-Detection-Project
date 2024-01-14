@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.decomposition import PCA
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, precision_score
+import joblib
 
 # Prepare/collect data
 path = os.listdir('brain_tumor/Training/')
@@ -38,35 +39,27 @@ xtest = xtest / 255
 
 # Feature Selection: PCA
 pca = PCA(0.98)
-pca.fit_transform(xtrain)
-pca.transform(xtest)
+xtrain_pca = pca.fit_transform(xtrain)  # Apply PCA transformation during training
+xtest_pca = pca.transform(xtest)        # Apply the same transformation during testing
+joblib.dump(pca, 'pca_model.joblib')
 
 # Train Model
 sv = SVC()
-sv.fit(xtrain, ytrain)
+sv.fit(xtrain_pca, ytrain)  # Train the model using the PCA-transformed training data
+# Save the trained model using joblib
+joblib.dump(sv, 'svm_model.joblib')
 
 # Evaluation
-
-print("Training Score (SVM):", sv.score(xtrain, ytrain))
-print("Testing Score (SVM):", sv.score(xtest, ytest))
+print("Training Score (SVM):", sv.score(xtrain_pca, ytrain))
+print("Testing Score (SVM):", sv.score(xtest_pca, ytest))
 
 # Prediction for SVM
-pred = sv.predict(xtest)
+pred = sv.predict(xtest_pca)
 misclassified = np.where(ytest != pred)
 print("Total Misclassified Samples(SVM): ", len(misclassified[0]))
 
 # TEST MODEL
 dec = {0: 'No Tumor', 1: 'Positive Tumor'}
-
-# Accuracy
-sv_pred = sv.predict(xtest)
-sv_accuracy = accuracy_score(ytest, sv_pred)
-
-# Precision
-sv_precision = precision_score(ytest, sv_pred)
-
-# Initialize misclassification counters
-misclassified_svm = 0
 
 # Visualize SVM predictions on 'no_tumor' images
 plt.figure(figsize=(12, 12))
@@ -78,12 +71,12 @@ for c, i in enumerate(os.listdir('brain_tumor/Testing/no_tumor/')[:20], 1):
     img = cv2.imread('brain_tumor/Testing/no_tumor/' + i, 0)
     img1 = cv2.resize(img, (200, 200))
     img1 = img1.reshape(1, -1) / 255
-    prediction = sv.predict(img1)
+    img1_pca = pca.transform(img1)  # Apply PCA transformation to the testing image
+    prediction = sv.predict(img1_pca)
     plt.imshow(img, cmap='gray')
     plt.title(f"{dec[prediction[0]]}")
     plt.axis('off')
-    if prediction[0] != 0:  # Misclassified
-        misclassified_svm += 1
+
 
 # Visualize SVM predictions on 'pituitary_tumor' images
 plt.figure(figsize=(12, 12))
@@ -95,19 +88,16 @@ for c, i in enumerate(os.listdir('brain_tumor/Testing/pituitary_tumor/')[:20], 1
     img = cv2.imread('brain_tumor/Testing/pituitary_tumor/' + i, 0)
     img1 = cv2.resize(img, (200, 200))
     img1 = img1.reshape(1, -1) / 255
-    prediction = sv.predict(img1)
+    img1_pca = pca.transform(img1)  # Apply PCA transformation to the testing image
+    prediction = sv.predict(img1_pca)
     plt.imshow(img, cmap='gray')
     plt.title(f"{dec[prediction[0]]}")
     plt.axis('off')
-    if prediction[0] != 1:  # Misclassified
-        misclassified_svm += 1
+
 
 plt.show()
-# Print total misclassified samples for each model
-print("Total Misclassified Samples (Support Vector Machine):", misclassified_svm)
 
-# Prediction for SVM
-pred_prob = sv.decision_function(xtest)  # Decision function scores for binary classification
+pred_prob = sv.decision_function(xtest_pca)  # Decision function scores for binary classification
 fpr, tpr, thresholds = roc_curve(ytest, pred_prob)
 roc_auc = roc_auc_score(ytest, pred_prob)
 
